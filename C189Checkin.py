@@ -1,57 +1,83 @@
-import requests, time, re, rsa, json, base64
-from urllib import parse
+import hashlib
+
+import requests, time, re, rsa, base64, random
 
 s = requests.Session()
 
 username = ""
 password = ""
 
-if(username == "" or password == ""):
+if (username == "" or password == ""):
     username = input("账号：")
     password = input("密码：")
 
+
 def main():
     login(username, password)
-    rand = str(round(time.time()*1000))
+    rand = str(round(time.time() * 1000))
     surl = f'https://api.cloud.189.cn/mkt/userSign.action?rand={rand}&clientType=TELEANDROID&version=8.6.3&model=SM-G930K'
     url = f'https://m.cloud.189.cn/v2/drawPrizeMarketDetails.action?taskId=TASK_SIGNIN&activityId=ACT_SIGNIN'
     url2 = f'https://m.cloud.189.cn/v2/drawPrizeMarketDetails.action?taskId=TASK_SIGNIN_PHOTOS&activityId=ACT_SIGNIN'
     headers = {
-        'User-Agent':'Mozilla/5.0 (Linux; Android 5.1.1; SM-G930K Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/74.0.3729.136 Mobile Safari/537.36 Ecloud/8.6.3 Android/22 clientId/355325117317828 clientModel/SM-G930K imsi/460071114317824 clientChannelId/qq proVersion/1.0.6',
-        "Referer" : "https://m.cloud.189.cn/zhuanti/2016/sign/index.jsp?albumBackupOpened=1",
-        "Host" : "m.cloud.189.cn",
-        "Accept-Encoding" : "gzip, deflate",
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 5.1.1; SM-G930K Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/74.0.3729.136 Mobile Safari/537.36 Ecloud/8.6.3 Android/22 clientId/355325117317828 clientModel/SM-G930K imsi/460071114317824 clientChannelId/qq proVersion/1.0.6',
+        "Referer": "https://m.cloud.189.cn/zhuanti/2016/sign/index.jsp?albumBackupOpened=1",
+        "Host": "m.cloud.189.cn",
+        "Accept-Encoding": "gzip, deflate",
     }
-    response = s.get(surl,headers=headers)
-    netdiskBonus = response.json()['netdiskBonus']
-    if(response.json()['isSign'] == "false"):
-        print(f"未签到，签到获得{netdiskBonus}M空间")
-    else:
-        print(f"已经签到过了，签到获得{netdiskBonus}M空间")
+    for i in range(3):
+        time.sleep(random.choice(range(3, 6)))
+        response = s.get(surl, headers=headers)
+        if ('netdiskBonus' not in response.json().keys()) and ('isSign' not in response.json().keys()):
+            print('尝试第{0}次签到'.format(i + 1))
+            continue
+        netdiskBonus = response.json()['netdiskBonus']
+        if (response.json()['isSign'] == "false"):
+            print(f"未签到，签到获得{netdiskBonus}M空间")
+        else:
+            print(f"已经签到过了，签到获得{netdiskBonus}M空间")
+        break
     headers = {
-        'User-Agent':'Mozilla/5.0 (Linux; Android 5.1.1; SM-G930K Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/74.0.3729.136 Mobile Safari/537.36 Ecloud/8.6.3 Android/22 clientId/355325117317828 clientModel/SM-G930K imsi/460071114317824 clientChannelId/qq proVersion/1.0.6',
-        "Referer" : "https://m.cloud.189.cn/zhuanti/2016/sign/index.jsp?albumBackupOpened=1",
-        "Host" : "m.cloud.189.cn",
-        "Accept-Encoding" : "gzip, deflate",
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 5.1.1; SM-G930K Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/74.0.3729.136 Mobile Safari/537.36 Ecloud/8.6.3 Android/22 clientId/355325117317828 clientModel/SM-G930K imsi/460071114317824 clientChannelId/qq proVersion/1.0.6',
+        "Referer": "https://m.cloud.189.cn/zhuanti/2016/sign/index.jsp?albumBackupOpened=1",
+        "Host": "m.cloud.189.cn",
+        "Accept-Encoding": "gzip, deflate",
     }
-    response = s.get(url,headers=headers)
-    if ("errorCode" in response.text):
-        print(response.text)
-    else:
-        description = response.json()['description']
-        print(f"抽奖获得{description}")
-    response = s.get(url2,headers=headers)
-    if ("errorCode" in response.text):
-        print(response.text)
-    else:
-        description = response.json()['description']
-        print(f"抽奖获得{description}")
+    response = s.get(url, headers=headers)
+    for i in range(3):
+        time.sleep(random.choice(range(3, 6)))
+        if ("errorCode" not in response.text) and ('description' not in response.json().keys()):
+            print('尝试第{0}次抽奖1'.format(i + 1))
+            continue
+        if "errorCode" in response.text:
+            print(response.text)
+        else:
+            description = response.json()['description']
+            print(f"抽奖获得{description}")
+        break
+    response = s.get(url2, headers=headers)
+    for i in range(3):
+        time.sleep(random.choice(range(3, 6)))
+        if ("errorCode" not in response.text) and ('description' not in response.json().keys()):
+            print('尝试第{0}次抽奖2'.format(i + 1))
+            continue
+        if "errorCode" in response.text:
+            print(response.text)
+        else:
+            description = response.json()['description']
+            print(f"抽奖获得{description}")
+        break
+
 
 BI_RM = list("0123456789abcdefghijklmnopqrstuvwxyz")
+
+
 def int2char(a):
     return BI_RM[a]
 
+
 b64map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+
 def b64tohex(a):
     d = ""
     e = 0
@@ -87,8 +113,10 @@ def rsa_encode(j_rsakey, string):
     result = b64tohex((base64.b64encode(rsa.encrypt(f'{string}'.encode(), pubkey))).decode())
     return result
 
+
 def calculate_md5_sign(params):
     return hashlib.md5('&'.join(sorted(params.split('&'))).encode('utf-8')).hexdigest()
+
 
 def login(username, password):
     url = "https://cloud.189.cn/udb/udb_login.jsp?pageId=1&redirectURL=/main.action"
@@ -106,7 +134,7 @@ def login(username, password):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/76.0',
         'Referer': 'https://open.e.189.cn/',
-        }
+    }
     data = {
         "appKey": "cloud",
         "accountType": '01',
@@ -117,17 +145,16 @@ def login(username, password):
         "returnUrl": returnUrl,
         "mailSuffix": "@189.cn",
         "paramId": paramId
-        }
+    }
     r = s.post(url, data=data, headers=headers, timeout=5)
-    if(r.json()['result'] == 0):
+    if (r.json()['result'] == 0):
         print(r.json()['msg'])
     else:
         print(r.json()['msg'])
     redirect_url = r.json()['toUrl']
     r = s.get(redirect_url)
     return s
-    
+
 
 if __name__ == "__main__":
     main()
-
